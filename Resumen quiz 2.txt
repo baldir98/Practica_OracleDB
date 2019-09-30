@@ -1,0 +1,65 @@
+
+------------------- ACID -----------------------------------------------------
+
+* Es lo básico que debe tener una DB relaional para poder ser consistente
+	- Atomicity: Transacciones completas, (todo o nada)
+	- Consistency:Veracidad de los datos, datos válidos deacuerdo a las 
+	  reglas definidas (fechas, montos de dinero....)
+	- Isolation: Independencia de las transacciones, una transacción no debe 
+	   afectar la otra.
+	- Durability: Durabilidad o preservación de los datos durante mucho tiempo,
+	  historial de los datos.
+
+------------------ NOMING CONVENTIONS --------------------------------------
+
+	- Eliminar las comillas, en minúsulas y más de dos palabras separadas por un guión bajo
+	- Evitar las palabras reservadas, sin abrebiaciones, los tipos de datos no son nombre
+	- Las tablas y vistas en plural, PK (id), FK 
+
+------------------ DEPENDENCIA FUNCIONAL -----------------------------------
+* Es cuando un campo clave determina a otro campo no clave:
+	- A->B: A determina a B ó B es funcionalmente dependiente de A
+	- A,B->c: A y B determinan a C ó C es funcionalmente dependiente de A y B
+	- DEPENDENCIA PARCIAL: Sólo aplica cuando la clave es compuesta(dos atributos como PK),
+	  es cuando parte de la clave determina un campo no clave
+	- DEPENDENCIA TRANCITIVA: Es cuando un campo no clave determina a otro campo no clave
+
+------------------ NORMALIZACIÓN --------------------------------------------
+
+* Es la aplicación de un conjunto de reglas o normas a cada una de las entidades de una
+  DB con el objetivo de minimizar la redundancia de datos, facilitando así la posterior 
+  gestión y utilización de una DB. 
+	a) Ayuda a eliminar las anomalias de inserción, actualización y eliminación en una DB
+	b) Reduce el espacio necesario para describir sus datos
+	c) Entre más se normalice, aumenta el uso de inner joins y proteje la integridad de 
+	   los datos
+	d) La desnormalización se utiliza para crear sistemas altamente escalables
+
+	- 1NF: + Requiere que los datos sean atómicos, prohibe que un campo tenga más de un dato
+                 de su dominio de columna, no datos diferentes en un campo separados por comas y giones.
+	       + Exige que todas las entidades o tablas deben tener una PK.
+	       + Indica que una tabla no debe tener atributos que acepten valores nulos  
+	- 2NF: + Ya debe de estar en la 1FN
+	       + Se debe ELIMINAR LA DEPENDENCIA PARCIAL (segun las claves PK, se dividen en dos o
+		 más tablas para que cada atributo no primo o no clave dependa sólamente de su campo clave
+		 y no olvidar la clave foránea).
+	       + Los campos claves van señalados ó sub rayados
+	- 3NF: + Debe de estar en la 1FN Y 2FN
+	       + Ningun campo o atributo no clave debe depender de otro no clave (ELIMINAR DEPENDENCIA 
+                 TRANCITIVA).
+	- BOYCE-CODD NF: + Es la 3.5 NF, toda tabla que esta en la 3.5NF ya esta en la 3NF, pero nó
+                           necesariamente la que esté en 3NF ya cumpla con la (BCNF), 
+        - 4NF:  + Debe de estar en la 3NF 
+	        + Varias relaciones de muchos a muchos pero no unidas entre si
+		+ Un registro no debe de tener dos o más valores múltiples independientes sobre una entidad
+		+ Eliminar dependencias de valores múltiples (un elemento depende de más de un valor)
+	- 5NF:  + Debe de estar en la 4NF
+		+ Remover las dependencias de joins, varias relaciones de muchos a muchos unidos.
+	        + Suncontenido de información no debe reconstruirce apartir de varios tipos de registros 
+		  más pequeños
+ 
+* NOTA: Se puede saltar la 2NF dependiendo de cómo se seleccionen las claves (en algunos casos en la 3NF 
+        se llega a la 2NF)
+
+
+	  
