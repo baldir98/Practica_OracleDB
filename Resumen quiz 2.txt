@@ -17,6 +17,7 @@
 	- Las tablas y vistas en plural, PK (id), FK 
 
 ------------------ DEPENDENCIA FUNCIONAL -----------------------------------
+
 * Es cuando un campo clave determina a otro campo no clave:
 	- A->B: A determina a B ó B es funcionalmente dependiente de A
 	- A,B->c: A y B determinan a C ó C es funcionalmente dependiente de A y B
@@ -55,11 +56,70 @@
 		+ Eliminar dependencias de valores múltiples (un elemento depende de más de un valor)
 	- 5NF:  + Debe de estar en la 4NF
 		+ Remover las dependencias de joins, varias relaciones de muchos a muchos unidos.
-	        + Suncontenido de información no debe reconstruirce apartir de varios tipos de registros 
+	        + Sun contenido de información no debe reconstruirce apartir de varios tipos de registros 
 		  más pequeños
  
 * NOTA: Se puede saltar la 2NF dependiendo de cómo se seleccionen las claves (en algunos casos en la 3NF 
         se llega a la 2NF)
 
+------------------- TABLESPACES ---------------------------------------------------
+
+* Es una estructura lógica primaria de almacenamiento de una base de datos para almacenar los 
+  ficheros (datafiles). Cada tablespace debe de tener 1 o varios Datafiles donde se almacena  
+  toda la información y los datafiles deben de tener una estructura lógica
+	 
+	- Tablespaces -> Lógicos NO SE PUEDE CREAR UN TABLESPACE SIN UN DATAFILE
+	- CUANDO SE CREA UN USUARIO SE LE DEBE INDICAR A QUE TABLESPACE SE VA A ALMACENAR, 
+          SI NO SE GUARDA POR DEFECTO EN USERS.
+	- El tablespace es el que contiene la información necesaria de los usuarios (SYS y SYSTEM) que son 
+	  los usuarios que tienen la información necesaria para que funcione la DB.
+        - Cuando se crea una DB se debe de crear almenos un tablespace, que por defecto es SYSTEM
+	- Se recomienda almenos crear otro tablespace para almacenar el resto de usuarios que vayamos creando
+	  en nuestra DB.
+	- Cuando se crea un tablespace se debe al menos indicar un datafile
+	- Sí elimino sólo el Tablespace sy datafile queda, no se borra
+
+	- Datafiles -> Físicos: RUTA FÍSICA DEL DISCO DURO, QUE TANTO TAMAÑO TIENE FÍSICA/ LA DB, LOS OBJETOS 
+				SE CREAN DENTRO DE LOS DATAFILES.
+	  fichero físico al que se le asigna un directorio (ruta), un nombre y un 
+	  tamaño inicial al que posteriormente podremos modificar (segun las necesidades y las restricciones 
+	  de la instalación.
+	- NOTA: + El tamaño de un TABLESPACE es el tamaño de los DATAFILES.
+		+ El tamaño de la base de datos es el tamaño colectivo de los TABLESPACE
+
+* Tipos de tablespaces:
+	- Bigfile: Los bloques estan alterados para almacenar más información, (SÓLO PUEDE TENER 1 datafile)
+	- System: Es donde se encuantra toda la información de Oracle para poder funcionar (pribiligios), 
+	          siempre va a estar corriendo, se crea automáticamente cuando se instala el Oracle.
+	- Sysaux: Auxiliar de System, se crea y se actualiza cuando se crea y actualiza la DB, 
+		  nó extraible ni desechable.
+	- UNDO: Almacena la información eliminada, (reversión, recuperación de transacciones de las DB, 
+		recuperación de los daños lógicos). Nó es posible crear tablas ó índices, cambio de operaciones
+	        DNL en transacciones,a cada instancia de oracle se le asigna sólo un espacio de tabla para deshacer.
+	- Read-only tablespace: Elimina la necesidad de realizar copias de seguridad y recuperación, 
+		                porciones grandes y estáticas de una DB, no se puede modificar, si recupera 
+				una base de datos no es necesario tablespaces de sólo lectura.
+	- Tempory: Los datos persisten sólo durante la sesión, mejora la concurrencia de operaciones múltiples,
+		   evita las operaciones de gestión de espacios, las ganancias de rendimiento son significativos
+		   con real aplicación CLÚSTERS. 
+
+* Comandos tablespace y datafile:
+	- select *from dba_tablespaces; (listar ó mostrar todos los Tablespaces)
+        - select *from dba_data_files;  (listar ó mostar todos los Datafiles)
+	- SELECT *FROM user_users;      (Usuario SYSTEM) 
+	- create tablespace TEST datafile '/users/oradata/orcl/test01.dbf' size 100M; (Crear un tablespace TEST, 
+	  de 100MB, en el directorio /users/oradata/orcl:)
+	- Alter tablespace nombre_tablespace add datafile '/users/oracle/orcl/nombre_datafile2.dbf' size 100M; 
+	 (añadiendo datafile creación de un nuevo tablespace a un datafile existente)
+	- alter datafile '/users/oradata/orcl/test01.dbf' resize 150M; (aumentar tamaño del datafile existente)
+	- drop tablespace TEST; (borrar sólo el tablespace)
+	- drop tablespace nombre del tablespace including contents and datafiles; (elimina el tablespace con sus datafiles)
+
+
+
+	
+	   
+        
+	
 
 	  
