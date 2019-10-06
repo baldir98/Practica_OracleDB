@@ -77,7 +77,7 @@
 	- Se recomienda almenos crear otro tablespace para almacenar el resto de usuarios que vayamos creando
 	  en nuestra DB.
 	- Cuando se crea un tablespace se debe al menos indicar un datafile
-	- Sí elimino sólo el Tablespace sy datafile queda, no se borra
+	- Sí elimino sólo el Tablespace su datafile queda, no se borra
 
 	- Datafiles -> Físicos: RUTA FÍSICA DEL DISCO DURO, QUE TANTO TAMAÑO TIENE FÍSICA/ LA DB, LOS OBJETOS 
 				SE CREAN DENTRO DE LOS DATAFILES.
@@ -110,11 +110,16 @@
 	- create tablespace TEST datafile '/users/oradata/orcl/test01.dbf' size 100M; (Crear un tablespace TEST, 
 	  de 100MB, en el directorio /users/oradata/orcl:)
 	- Alter tablespace nombre_tablespace add datafile '/users/oracle/orcl/nombre_datafile2.dbf' size 100M; 
-	 (añadiendo datafile creación de un nuevo tablespace a un datafile existente)
+	 (añadiendo un datafile a un Tablespace existente)
 	- alter datafile '/users/oradata/orcl/test01.dbf' resize 150M; (aumentar tamaño del datafile existente)
 	- drop tablespace TEST; (borrar sólo el tablespace)
 	- drop tablespace nombre del tablespace including contents and datafiles; (elimina el tablespace con sus datafiles)
+	- ALTER DATABASE DATAFILES nombre_datafile AUTOEXTEND ON NEXT 20M MAXSIZE 1000M; (aumenta el tamaño de la base de 
+	  datos aumentando dinámicamente sus datafiles en sus Tablespace existentes, aumenta de 20 en 20 hasta max 1000)
 
+------------------ ADMINISTRACIÓN DE USUARIOS Y PRIBILEGIOS ------------------------------------------
+
+* 
 
 
 	
