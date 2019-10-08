@@ -119,7 +119,40 @@
 
 ------------------ ADMINISTRACIÓN DE USUARIOS Y PRIBILEGIOS ------------------------------------------
 
-* 
+* CONCEPTOS:
+	*- Usuario: Objeto que se puede conectar a la DB, se crea por medio de un usuario y contraseña y se define a que 
+	           tablespace está asociado.
+	- Rol: Es un grupo de privilegios que se le asignan a un usuario o grupo de usuarios que realizan la misma función
+	       o a otros roles.
+	- Privilegios: Es el permiso ó permisos que se le dan a un usuario para que interactue con la DB, (crear, sólo lectura,
+                       modificar,etc...)
+	- NOTA: El que crea un obj automáticamente tiene los privilegios para admin ése obj, o el usuario SYSTEM, o otro usuario
+		con los privilegios asignados, si un user quiere ver o admin ése obj, se le deben dar los privilegios.
+	*- Perfiles: Es el límite de recursos que un user puede tener en una DB-
+	   - Recursos: Cómo se comporta el user durante la sesión en el sistema, (tiempo de conexión, # de equivocaciones del password, 
+		       tiempo para cambiar password, # CPU que puede utilizar el user).
+	- NOTA: Un user puede nó tener un perfil o máximo 1 perfil (0-1), dentro de un perfil debe de tener mínimo un recurso configurado
+                ó muchos recursos (1-N).
+
+* COMANDOS:
+	- Privilegios: GRANT -> Garantizar
+		       REVOKE -> Quitar
+
+	- Rol: (CREATE,ALTER,DROP,SET) ROLE
+	       (GRANT,REVOKE) TO-name_OF_oracle
+
+	- Usuario: (CREATE,ALTER,DROP) USER
+		   (GRANT,REVOKE) TO_NAME_OF_USER
+
+	- Perfil: (CREATE,ALTER,DROP) USER
+		  ALTER USER.....PROFILE
+		  CREATE USER.....PROFILE		
+
+
+
+
+
+	
 
 
 	
