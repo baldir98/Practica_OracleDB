@@ -134,7 +134,7 @@
 	- NOTA: Un user puede nó tener un perfil o máximo 1 perfil (0-1), dentro de un perfil debe de tener mínimo un recurso configurado
                 ó muchos recursos (1-N).
 
-* COMANDOS:
+* COMANDOS: (Privilegios, Rol, usuarios, Perfiles)
 	- Privilegios: GRANT -> Garantizar
 		       REVOKE -> Quitar
 
@@ -146,7 +146,66 @@
 
 	- Perfil: (CREATE,ALTER,DROP) USER
 		  ALTER USER.....PROFILE
-		  CREATE USER.....PROFILE		
+		  CREATE USER.....PROFILE
+
+* COMANDOS: (Creación y manipulación de usuarios)
+
+    - CREACIÓN DE USUARIO-FORMA LARGA: 1. CREATE USER Sidney
+					2. IDENTIFIED BY contraseña
+					3. DEFAULT TABLESPACE example
+					4. QUOTA 10M ON exampe
+					5. TEMPORARY TABLESPACE temp
+					6. QUOTA 5M ON System
+					7. PROFILE app_user
+					8. PASSWORD EXPIRE;
+	 NOTA: las líneas 3 y 4 se pueden eliminar si sólo se quiere crear un usuario
+	       de sólo lectura y se puede manejar el acceso por medio de los privilegios.
+
+    - CREACIÓN DE USUARIO-FORMA RESUMIDA: 1. CREATE USER Sidney
+					  2. IDENTIFIED BY contraseña
+					  3. DEFAULT TABLESPACE example
+					  4. QUOTA ON 10M ON exampe
+
+    - MODIFICACIÓN DE USUARIO: 1. ALTER USER Sidney (PROFILE....ETC)
+					2. IDENTIFIED BY contraseña
+					3. [DEFAULT TABLESPACE example]
+					4. [TEMPORARY TABLESPACE temp]		
+					5. [QUOTA 10M UNLIMITED ON example]
+					6. [PASSWORD EXPIRE]
+					7. [ACCOUNT {LOCK|UNLOCK}]
+					8. [PROFILE perfil];
+	
+    - ELIMINACIÓN DE USUARIO: 1. DROP USER nombre usuario [CASCADE];
+		+ NOTA: - Si queremos eliminar un usuario con [CASCADE] que a creado uno o varios objetos 
+			  (tablas), automáticamente se eliminaran todos los objs hijos de este usuario
+			- Se puede solucionar eliminando el privilegio de crear sesión
+			- Otra solución es trasladar todos los objs a otro DBA, lo cual genera muchisimo trabajo
+			- Otra solución es crear varios DBA y compartir la misma contraseña para todos.
+			  (NÓ RECOMENDABLE PARA AUDITORÍAS)
+   	
+     - MANIPULACIÓN DE PRIVILEGIOS A USUARIOS: 
+		1. GRANT CREATE SESSION, CREATE TABLE TO aitor; 	
+		   (al usuario aitor le damos o garantizamos el privilegio de crear sesión y crear taba)
+	        2. GRANT CREATE PROCEDURE, EXECUTE ANY PROCEDURE TO aitor, luisa; 
+		   (se le da el privilegio de crear procesos, ejecutar cualquier proceso a los usuarios aitor y luisa)
+		3. GRANT CREATE USER TO luisa WITH ADMIN OPTIONS; 
+		   (le damos el privilegio de creación de usuario a luisa con obciones administrativas)
+		4. GRANT DBA TO nombre del usuario;
+		   (le damos un Rol de DBA al usuario x)
+    
+      - MANIPULACIÓN DE PRIVILEGIOS A OBJETOS: SE UTILISA LA PALABRA (ON) PARA ESPECIFICAR A QUE OBJETO SE REFIERE
+		1. GRANT SELECT ON juan.empleados TO aitor;
+		   (se le concede hacer SELECT al usuario aitor, sobre la tabla empleados donde el dueño es juan)
+		2. GRANT UPDATE ANY TABLE TO aitor;
+		   (se le concede hacer UPDATE al usuario aitor en cualquier tabla)
+		3. GRANT SELECT, INSERT, UPDATE ON luisa.farmacia TO public;
+		   (se le concede SELECT, INSERT, UPDATE la Rol public en la tabla farmacia de la cual es dueña luisa,
+		    significa que todos los usuarios del sistema y los que yó cree, tendran esos privilegios)
+		4. GRANT INSERT (id,apellidos) ON juan.empleados TO luisa;
+		   (se le concede hacer inserciones en las propiedades (id y apellidos) al usuario luisa en la tabla 
+		   empleados donde el dueño es juan)
+
+	
 
 
 
