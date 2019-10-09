@@ -205,6 +205,47 @@
 		   (se le concede hacer inserciones en las propiedades (id y apellidos) al usuario luisa en la tabla 
 		   empleados donde el dueño es juan)
 
+	* NOTA: PRIVILEGIOS SOBRE LOS OBJETOS (Tablas, Vistas,Secuencia, Prosedimiento)
+
+		- T: ALTER, UBDATE, DELETE, INSERT, SELECT
+		- V: DELETE, INSERET, SELECT
+		- S: ALTER, SELECT
+		- P: EXECUTE 
+
+   	* Rol público: Lo recomendado por Oracle es que no se den permisos sobre éste Rol ya que no se puede depender
+		       los ususarios sobre éste Rol ya que si en versiones futuras eliminan éste rol o le quitan privilegios
+		       se pueden alterar esos roles que vienen por defecto en el sistema.
+
+		      - select table_name, privilege FROM sys.dba_tab_privs WHERE grantee='PUBLIC';
+
+	- ELIMINACIÓN DE PRIVILEGIOS: Se debe tener en cuenta que si se eliminan privilegios a un dueño de un o unos objetos
+				      a los cuales se les haya dado el mismo privilegio, automáticamente se elimina ése 
+				      privilegio a los objetos hijos.
+				     
+				      1. REVOKE permiso1,permiso2,.... ó ALL [PRIVILEGES]
+				      2. ON [usuario.]objeto
+				      3. FROM nombreUsuario |rol| PUBLIC [,nombreUsuario] | nombreRol,....];
+				      4.
+				      5. REVOKE INSERT on employees FROM luisa; -- esta línea dice que se le quita el privilegio 
+										   de insertar al Usuario luisa sobre la tabla empleados.
+
+	- ROLES: Recordar que los roles se pueden anidar para así poder administrar los diferentes roles sobre los usuarios
+	       
+		- creación de roles: 1. CREATE ROLE nombreRol
+				     2. [IDENTIFIED BY contraseña]; 
+
+		- borrar role: 1. DROP ROLE nombreRol;
+
+		- dar permisos a roles: 1. GRANT permiso1[permiso2,...];
+					2. ON [usuario.]objeto
+					3. TO nombreRole;
+
+		- Ejemplos: 1. GRANT SELECT, UPDATE ON scott.emp TO miRole;
+			    2. GRANT SELECT, INSERT, DELETE, UPDATE ON scott.dept TO miRole;
+			    3. GRANT SELECT ON scott.salgrade TO miRole;
+			    4. GRANT SELECT ON scott.bonus TO miRole;	
+				      					
+		 
 	
 
 
