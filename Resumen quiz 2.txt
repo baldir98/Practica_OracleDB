@@ -243,14 +243,103 @@
 		- Ejemplos: 1. GRANT SELECT, UPDATE ON scott.emp TO miRole;
 			    2. GRANT SELECT, INSERT, DELETE, UPDATE ON scott.dept TO miRole;
 			    3. GRANT SELECT ON scott.salgrade TO miRole;
-			    4. GRANT SELECT ON scott.bonus TO miRole;	
-				      					
-		 
+			    4. GRANT SELECT ON scott.bonus TO miRole;
+
+	 * ROLES ESPECÍFICOS:
+          
+	   - dba_roles: Contiene todos los roles disponibles
+ 	     select *from dba_roles; (con el usuario sysem me muestra todos los roles disponibles)
+		
+	   - dba_role_privs: Contiene el mapeado deroles y usuarios
+             -- contiene el mapeado de Roles Y usuarios
+             select¨* from dba_roles_privs where grantee = "AMARTINEZ"
+
+	   - dba_sys_privs: Privilegios asignados a cada role (incluso a los ya predefinidos Oracle)
+	     -- privilegios asignados a cada role
+	     select * from dba_sys_privs where grantee = "DBA";
+
+	   - ROLE_TAB_PRIVS: Privilegios de tablas garantizados a roles.
+	     -- privilegios de tablas garantizados a roles
+		select *from ROLE_TAB_PRIVS;
+
+	   - ROLE_SYS_PRIVS: Privilegios del sistema asignados a roles
+	    -- privilegios del sistema asignados a roles
+	       select *from ROLE_SYS_PRIVS;
+		
+	   - ROLES QUE SE HAN ASIGNADOS A OTROS ROLES
+             select *from ROLE_ROLE_PRIVS; 
+
+	   - LÍMITES DE USO DE ESOACIOS EN DISCO
+	     select *from dba_ts_quotas;
+
+	   - LÍMITES DE RECURSOS EN ORACLE PARA EL USUARIO ACTUAL
+	     select *from user_resource_limits;
+
+	   - VISTA QUE APUNTA REALMENTE A LA TABLA SYS.USERS. ALMACENA INFO DE TODOS LOS USUARIOS DE LA BD
+	     select *from dba_users;
+
+	    - VISTA QUE MUESTRA INFORMACIÓN SOBRE EL USUARIO ACTUALMENTE CONECTADO
+	      select *from user_users;
+
+	   - CONTIENE TODAS LAS TABLAS ACCESIBLES POR EL USUARIO (las compias más las que tienen permisos sobre ellas)
+	     select +from all_tables,
+
+	   - CONSULTAMOS TODOS LOS PRIVILEGIOS QUE CONTIENE EL ROL DBA
+	     select *from dba_sys_privs_where grantee= "DBA";	
 	
+	* Perfiles: Si el usuario no tiene perfil asignado, se le asigna automáticamente el perfil de DEFAULT
+                    1. SELECT *FROM DBA_PROFILES ORDER BY PROFILE;
+		    2. SELECT USERNAME, PROFILE, ACCOUNT_STATUS FROM DBA_USERS;
+
+                  - SELECT *FROM DBA_PROFILES; (Miramos que perfiles hay creados)
+		  - SELECT DISTINCT(PROFILE) FROM DBA_PROFILES; (lista cuantos perfiles tengo)
+		  - SELECT *FROM DBA_PROFILES WHERE PROFILE = 'DEFAULT'; (muestra los recursos que tiene asignados este perfil por defecto)
+		  - CREATE PROFILE TEST LIMIT IDLE_TIME 5 SESSION_PER_USER 3;( creamos un perfil con limitacion de tiempo de session de 5 y 3 por usuario)
+
+        * NOTA: alterar la sesión en oracle 12c: alter session set "_ORACLE_SCRIPT"= true; 
+
+---------------------------- PRACTICA ADMINISTRACIÓN DE USUARIO ------------------------------
+
+* Desde el usuario System, para esta practica verificamos que usuarios, Tablespace, datafiles y tablas hay creadas; las borramos para iniciar desde cero.
+
+	- Verificamos: + SELECT *FROM DBA_TABLESPACES;
+	               + SELECT *FROM DBA_DATA_FILES;
+	               + SELECT *FROM DBA_users; 
+
+	- Eliminamos: + alter session set "_ORACLE_SCRIPT"= true; (alteramos sesión cuando nos salga errores de creación o eliminación)
+		      + drop tablespace nombre del Tablespace including contents and DATAFILES;
+		      + drop table nombre de la tabla;
+		      + drop USER NICHE CASCADE; (elimina el usuario y sus objetos y demasb)
+		
+	- Creación Tablespaces y datafiles: Creamos 2 Tablespaces, cada uno con su datafile, despues creamos dos tablas en cada uno y dos usuarios los cuales podran acceder a las 
+		                    tablas así se encuentren en Tablespaces diferentes:
+		      0) Alterar la sesión para poder crear usuarios y privilegios 
+                         - alter session set "_ORACLE_SCRIPT"= true;
+		      1) Creamos los 2 Tablespaces con sus respectivos datafiles
+                         - create tablespace Practica_itm datafile 'itm_01.dbf' size 100M;
+		         - create tablespace Practica_finance datafile 'finance_01.dbf' size 50M;
+		      2) Creación de usuarios con su contraseña, la quota, el Tablespace asignado,
+                         y en que Tablespace se le asigna esa cuota.
+                         - create user Practica_user1 identified by user1
+                           default tablespace Practica_itm quota 50M on Practica_itm; 
+		      3) despues de crear el usuario se le debe de dar como mínimo el 
+  			 privilegio de crear o iniciar sesión para que se pueda conectar
+			 - grant create session to Practica_user1; 
+ 		      4) creamos un Rol full_access, luego a ése rol full_access le asignamos 
+                         todos los privilegios que tiene el rol DBA más el privilegio de crear sesión
+                         create role full_access;
+  			 - grant dba,create session to full_access; 
+			 - REVOKE create session from Practica_user1; -- eliminamos el privilegio anteriormente dado al usuario Practica_user1
+			 - grant full_access to Practica_user1; -- le asignamos el rol creado (full_access) al usuario Practica_user1
+			 - select *from dba_users WHERE DEFAULT_TABLESPACE IN ('PRACTICA_ITM','PRACTICA_FINANCE');
+
+		      5) Desde los uauarios creados verificamos a que tablas por defecto tenemos acceso.
+			 - select *from all_tables; 
 
 
-
-
+		      	
+		      
+ 	
 
 	
 
