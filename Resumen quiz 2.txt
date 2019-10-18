@@ -311,20 +311,24 @@
 		      + drop table nombre de la tabla;
 		      + drop USER NICHE CASCADE; (elimina el usuario y sus objetos y demasb)
 		
-	- Creación Tablespaces y datafiles: Creamos 2 Tablespaces, cada uno con su datafile, despues creamos dos tablas en cada uno y dos usuarios los cuales podran acceder a las 
-		                    tablas así se encuentren en Tablespaces diferentes:
+	- Creación Tablespaces y datafiles: Creamos 2 Tablespaces, cada uno con su datafile, despues creamos dos tablas en cada uno y dos 
+                                            usuarios los cuales podran acceder a las tablas así se encuentren en Tablespaces diferentes:
 		      0) Alterar la sesión para poder crear usuarios y privilegios 
                          - alter session set "_ORACLE_SCRIPT"= true;
+
 		      1) Creamos los 2 Tablespaces con sus respectivos datafiles
                          - create tablespace Practica_itm datafile 'itm_01.dbf' size 100M;
 		         - create tablespace Practica_finance datafile 'finance_01.dbf' size 50M;
+
 		      2) Creación de usuarios con su contraseña, la quota, el Tablespace asignado,
                          y en que Tablespace se le asigna esa cuota.
                          - create user Practica_user1 identified by user1
                            default tablespace Practica_itm quota 50M on Practica_itm; 
+
 		      3) despues de crear el usuario se le debe de dar como mínimo el 
   			 privilegio de crear o iniciar sesión para que se pueda conectar
 			 - grant create session to Practica_user1; 
+
  		      4) creamos un Rol full_access, luego a ése rol full_access le asignamos 
                          todos los privilegios que tiene el rol DBA más el privilegio de crear sesión
                          create role full_access;
@@ -335,6 +339,539 @@
 
 		      5) Desde los uauarios creados verificamos a que tablas por defecto tenemos acceso.
 			 - select *from all_tables; 
+			 - select *from user1.nombre del objeto; --(consultamos toda la info de un objeto de otro dueño con el nombre de el que tenga permiso).
+                         -select *from all_tables WHERE TABLESPACE_name IN ('PRACTICA_ITM','PRACTICA_FINANCE');
+
+		      6) Creamos las dos tablas una desde su mismo tablespace y otro con el nombre del tablespace donde iría dirigido.
+		         - create table employees(
+			   id int,
+                           first_name varchar(50),   --- tabla con el usuario desde su tablespace
+                           last_name varchar(50),
+                           email varchar(50),
+                           gebder varchar(50)
+			    );
+
+			 - create table salaries(
+			   id int,
+                           employee_id int,   
+                           salary decimal(10,2),
+                           department varchar(11),
+                           beginning_date DATE
+			    )
+                             tablespace Practica_finance;  --- tabla desde un usuario hacia otro tablespace
+  
+                          * Consultamos a que tenemos permiso con:- select *from all_tables where tablespace_name in ('practica_itm','practica_finance');
+
+			  *corrección o modificación de algunos usuarios y privilegios:
+ 				- grant user to user1 quota unlimited on Practica_finance; -- (le asignamos al user1 una cuota ilimitada en el tablespace Practica_finance 
+                                                               				       que se olvidó en el momento de la creación del usuario)
+ 
+			  * Desde el dueño(Practica_user1 que es DBA) del objeto 'salaries' le damos permisos al usuario 'Practica_user2' o al Rol en específico: 
+				- GRANT SELECT ON salaries TO Practica_user2; -- (sólo vería la tabla o info de los salarios pero sin saber a que empleado pertenece)
+
+				- podemos quItar ese permiso con : REVOKE SELECT ON SALARIES FROM ACCOUNTTANT; 
+				   PERO CON EL PERMISO DE LA VISTA read la podemos mirar:  
+
+			  * Desde el dueño(Practica_user1 que es DBA) del objeto 'employees' le damos permisos al usuario 'Practica_user2' para que tenga sólo lectura (read)
+			    en una vista del onjeto employes.
+				- 1) creamos la vista: 
+				     create view employees_details as       --- creación de la vista 
+                                     select employees.id,first_name,last_name,email, gender, salary, department,beginning_date from employees
+                                     inner join salaries on employees.id = salaries.employees_id
+                                     ORDER BY department, salary DESC; 
+
+                                - 2) le damos GRANT READ ON Practica_user1.employeess_detail TO Practica_user2;
+            			- GRANT SELECT ON salaries TO Practica_user2;
+				- consultamos desde el usuario 'Practica_user2;' con: select *from practica_user1.employees;
+
+
+			* ALIAS: 
+
+-------------------------------- INPORTAR DATOS -------------------------------------------------------------------------------------------------------
+
+1) desvargamos el archivo donde esten los datos (.CSV...)
+
+2) Creamos la tabla:
+
+create table agencies (
+country varchar2(255),
+resort_name varchar2(255),
+number_of_days integer,
+travel_method varchar2(255),
+price decimal(10,2),
+date_of_issue date,
+monht varchar2(255),
+holiday_id varchar2(255)
+);
+
+3) luego: - Click derecho en la tabla y inportar datos
+	  - que si podamos ver los datos cargados en el contenido de archivos, buscamos el archivo donde lo guardamos, tenemos en cuenta el formato(csv), delimiter(,).
+	  - Que permita insertar (Metodo de inportación - insert)
+	  - pasar todas las columnas a la izquierda para despues pasarlas en el orden en que estan los datos o fue creada la tabla.
+	  - Definir lasconcidencias de los nombre de las columnas con las que tenemos, el formato de fecha se puede organizar segun la nesecidad (MM/DD/YY).
+          - Por ultimo verificar la tabla que si se cargaron los datos (select *from agencies;)
+
+------------------------------ VISTAS Y VISTAS MATERIALIZADAS ------------------------------------------------------------------------------------------------------
+
+Una vista es como una tabla lógica, es una tabla que existe virtualmente pero físicamente no existe dentro de la DB, una vista no tiene datos y cuando se contruye 
+la vista la información que viene de las tablas se llama tabla base. La vista es un alias a un query y ése alias se convierte como si fuese una tabla más pero lógica, 
+es una tabla que no existe. ejm:
+
+* Creación básica de una vista: - CREATE VIEW customer_credit AS SELECT name, credit_limit FROM customers; -- (creamos la vista customer_credit y traemos las columnas
+													       name y credit_limit de la tabla customers)
+				- SELECT *FROM customer_credits; ---(consultamos) 
+
+* NOTA: Para crear una vista se debe tener el privilegio de CREATE VIEW, y si se quiere crearle la vista a otro usuario se requiere el privilegio de CREATE ANY VIEW.
+        Si se quiere crear un alias de un query complejo, se debe tener los privilegios nesesarios sobre las tablas involucradas en el query (insert,update,delete).
+	Es inportante saber que si yó sólo voy a consultar la vista que otro usuario creó, yo sólo debo de tener los permisos de lectura o select.
+        las vistas sirven para la a) ejecución de querys complejos y verlos como tablas más simples y no  afecta el rendimiento, b) por motivos de seguridad,
+
+* - Si las vistas ya fueron creadas, para no tener que borrarla cambiamos VIEW por OR REPLACE para no tener que eliminar la vista y volverla a crear. 
+  - para que sólo se cree la vista cuando las tablas base existan, de lo contrario no se hace.          
+  - luego del CREATE VIEW y el nombre de la vista, colocamos la palabra AS y despues se pone la lógica SELECT.
+
+* Las vistas se pueden utilizar para actualizar información pero sólo se pueden cambiar las columnas que esten asociadas a una sola tabla, si la vista tiene 2 iner joins
+  no funciona. Ejemplo para actualizar información:
+
+  CREATE VIEW clerk AS
+     SELECT employee_id, last_name, department_id, job_id
+     FROM EMPLOYEES
+     WHERE job_id = 'PU_CLERK'
+          or job_id ='SH_CLERK'
+          or job_id = 'ST_CLERK';
+ 
+     UPDATE clerk set job_id = 'PU_MAN' WHERE emplyee_id = 118;
+
+- WITH CHECK OPTION: Es algo especial que tenemos en aracle 12c y sirve para tener un mayor control en las vistas cuando se actualizan, sólo permitiria cambiar lo que se encuentra
+  dentro del primer where (3), de resto nó.
+
+  CREATE VIEW clerk AS
+     SELECT employee_id, last_name, department_id, job_id
+     FROM EMPLOYEES
+     WHERE job_id = 'PU_CLERK'
+          or job_id ='SH_CLERK'
+          or job_id = 'ST_CLERK';
+     
+     WITH CHECK OPTION;
+
+* Ejemplos:
+ 
+ CREATE VIEW EMPLOYEE_VIEW AS
+ SELECT LAST _NAME, SALARY*12 ANNUAL_SALARY 
+ FROM EMPLOYEES
+ WHERE DEPARTMENT_ID =20;
+
+ CREATE OR REPLACE VIEW ACCOUNTS_AVG_BALANCE_GT_50000 AS 
+ SELECT ACCOUNTS.TYPE, LOCATIONS.CITY, AVG(BALANCE) FROM ACCOUNTS
+ INNER JOIN LOCATIONS ON ACCOUNTS.LOCATIONS_ID = LOCATIONS.ID
+ HAVING AVG (BALANCE) >= 50000
+ GROUP BY ACCOUNTS.TYPE, LOCATIONS.CITY
+ ORDER BY CITY;   
+
+********************  COMANDOS *******************************************
+
+/*CREAR TABLESPACE*/
+create tablespace mid_term datafile 'mid_term.DBF' size 20M;
+
+alter session set "_ORACLE_SCRIPT"=true;
+
+/*CREAR PERFIL*/
+CREATE PROFILE parcial LIMIT 
+IDLE_TIME 20 
+FAILED_LOGIN_ATTEMPTS 2;
+
+/*CREAR USUARIO*/
+CREATE USER LGIRALDO
+IDENTIFIED BY lgiraldo12
+DEFAULT TABLESPACE mid_term
+QUOTA UNLIMITED ON mid_term;
+
+/*ASIGNAR PERFIL A USUARIO*/
+alter user LGIRALDO profile parcial;
+
+/*CREAR USUARIO SIN ESPACIO EN TABLESPACE*/
+CREATE USER USUARIO2
+IDENTIFIED BY lgiraldo12
+DEFAULT TABLESPACE mid_term;
+
+/*CREAR ROLES*/
+CREATE ROLE MINI_DBA;
+CREATE ROLE STUDENT;
+
+/*ASIGNAR PERMISOS AL ROL CREADO*/
+GRANT  CREATE TABLE, CREATE VIEW, CREATE SESSION TO MINI_DBA;
+GRANT CREATE SESSION, SELECT ANY TABLE TO STUDENT;
+
+/*ASIGNAR ROL A USUARIO*/
+GRANT MINI_DBA TO LGIRALDO;
+
+
+
+--------------------------------------------------------
+-- Archivo creado  - jueves-octubre-17-2019   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Table BARRIOS
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."BARRIOS" 
+   (	"ID" NUMBER(22,0), 
+	"NOMBRE" VARCHAR2(255 BYTE), 
+	"COMUNA_ID" NUMBER(22,0)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table COMUNAS
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."COMUNAS" 
+   (	"ID" NUMBER(22,0), 
+	"NOMBRE" VARCHAR2(255 BYTE), 
+	"TIPO_COMUNA_ID" NUMBER(22,0)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table ESTADOS_PRESTADORES
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."ESTADOS_PRESTADORES" 
+   (	"ID" NUMBER(22,0), 
+	"NOMBRE" VARCHAR2(255 BYTE)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table MODALIDADES
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."MODALIDADES" 
+   (	"ID" NUMBER(22,0), 
+	"NOMBRE" VARCHAR2(255 BYTE)
+   ) SEGMENT CREATION DEFERRED 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table PRESTADORES
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."PRESTADORES" 
+   (	"ID" NUMBER(22,0), 
+	"NOMBRE" VARCHAR2(255 BYTE), 
+	"FECHA_CONTRATACION" DATE, 
+	"VALOR_CONTRATO" NUMBER(22,0), 
+	"ESTADO_ID" NUMBER(22,0)
+   ) SEGMENT CREATION DEFERRED 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table SEDES
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."SEDES" 
+   (	"ID" NUMBER(22,0), 
+	"SEDE" VARCHAR2(255 BYTE), 
+	"TELEFONO" VARCHAR2(255 BYTE), 
+	"DIRECCION" VARCHAR2(255 BYTE), 
+	"CUPOS_DISPUESTOS" NUMBER(22,0), 
+	"BARRIO_ID" NUMBER(22,0), 
+	"MODALIDAD_ID" NUMBER(22,0), 
+	"PRESTADOR_ID" NUMBER(22,0)
+   ) SEGMENT CREATION DEFERRED 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Table TIPO_COMUNAS
+--------------------------------------------------------
+
+  CREATE TABLE "LGIRALDO"."TIPO_COMUNAS" 
+   (	"ID" NUMBER(22,0), 
+	"TIPO" VARCHAR2(255 BYTE)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_SEDES_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_SEDES_PK" ON "LGIRALDO"."SEDES" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_BARRIOS_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_BARRIOS_PK" ON "LGIRALDO"."BARRIOS" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_TIPO_COMUNAS_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_TIPO_COMUNAS_PK" ON "LGIRALDO"."TIPO_COMUNAS" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_COMUNAS_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_COMUNAS_PK" ON "LGIRALDO"."COMUNAS" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_PK" ON "LGIRALDO"."ESTADOS_PRESTADORES" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_MOD_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_MOD_PK" ON "LGIRALDO"."MODALIDADES" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  DDL for Index ID_PRESTADORES_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "LGIRALDO"."ID_PRESTADORES_PK" ON "LGIRALDO"."PRESTADORES" ("ID") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM" ;
+--------------------------------------------------------
+--  Constraints for Table SEDES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("SEDE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("TELEFONO" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("DIRECCION" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("CUPOS_DISPUESTOS" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("BARRIO_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("MODALIDAD_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" MODIFY ("PRESTADOR_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."SEDES" ADD CONSTRAINT "ID_SEDES_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table MODALIDADES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."MODALIDADES" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."MODALIDADES" MODIFY ("NOMBRE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."MODALIDADES" ADD CONSTRAINT "ID_MOD_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table COMUNAS
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."COMUNAS" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."COMUNAS" MODIFY ("NOMBRE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."COMUNAS" MODIFY ("TIPO_COMUNA_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."COMUNAS" ADD CONSTRAINT "ID_COMUNAS_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table ESTADOS_PRESTADORES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."ESTADOS_PRESTADORES" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."ESTADOS_PRESTADORES" MODIFY ("NOMBRE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."ESTADOS_PRESTADORES" ADD CONSTRAINT "ID_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table PRESTADORES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."PRESTADORES" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."PRESTADORES" MODIFY ("NOMBRE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."PRESTADORES" MODIFY ("FECHA_CONTRATACION" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."PRESTADORES" MODIFY ("VALOR_CONTRATO" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."PRESTADORES" MODIFY ("ESTADO_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."PRESTADORES" ADD CONSTRAINT "ID_PRESTADORES_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table BARRIOS
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."BARRIOS" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."BARRIOS" MODIFY ("NOMBRE" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."BARRIOS" MODIFY ("COMUNA_ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."BARRIOS" ADD CONSTRAINT "ID_BARRIOS_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table TIPO_COMUNAS
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."TIPO_COMUNAS" MODIFY ("ID" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."TIPO_COMUNAS" MODIFY ("TIPO" NOT NULL ENABLE);
+  ALTER TABLE "LGIRALDO"."TIPO_COMUNAS" ADD CONSTRAINT "ID_TIPO_COMUNAS_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "MID_TERM"  ENABLE;
+--------------------------------------------------------
+--  Ref Constraints for Table BARRIOS
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."BARRIOS" ADD CONSTRAINT "COMUNA_ID_FK" FOREIGN KEY ("COMUNA_ID")
+	  REFERENCES "LGIRALDO"."COMUNAS" ("ID") ENABLE;
+--------------------------------------------------------
+--  Ref Constraints for Table COMUNAS
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."COMUNAS" ADD CONSTRAINT "TIPO_COMUNA_ID_FK" FOREIGN KEY ("TIPO_COMUNA_ID")
+	  REFERENCES "LGIRALDO"."TIPO_COMUNAS" ("ID") ENABLE;
+--------------------------------------------------------
+--  Ref Constraints for Table PRESTADORES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."PRESTADORES" ADD CONSTRAINT "ESTADO_ID_FK" FOREIGN KEY ("ESTADO_ID")
+	  REFERENCES "LGIRALDO"."ESTADOS_PRESTADORES" ("ID") ENABLE;
+--------------------------------------------------------
+--  Ref Constraints for Table SEDES
+--------------------------------------------------------
+
+  ALTER TABLE "LGIRALDO"."SEDES" ADD CONSTRAINT "BARRIO_ID_FK" FOREIGN KEY ("BARRIO_ID")
+	  REFERENCES "LGIRALDO"."BARRIOS" ("ID") ENABLE;
+  ALTER TABLE "LGIRALDO"."SEDES" ADD CONSTRAINT "MODALIDAD_ID_FK" FOREIGN KEY ("MODALIDAD_ID")
+	  REFERENCES "LGIRALDO"."MODALIDADES" ("ID") ENABLE;
+  ALTER TABLE "LGIRALDO"."SEDES" ADD CONSTRAINT "PRESTADOR_ID_FK" FOREIGN KEY ("PRESTADOR_ID")
+	  REFERENCES "LGIRALDO"."PRESTADORES" ("ID") ENABLE;
+
+
+******************************************************************
+
+CREATE TABLE ESTADOS_PRESTADORES (
+  ID NUMBER (22,0) NOT NULL,
+  NOMBRE VARCHAR(255) NOT NULL
+  );
+  
+  ALTER TABLE ESTADOS_PRESTADORES
+  ADD CONSTRAINT ID_PK PRIMARY KEY (ID);
+
+CREATE TABLE MODALIDADES (
+  ID NUMBER (22,0) NOT NULL,
+  NOMBRE VARCHAR(255) NOT NULL,
+    CONSTRAINT ID_MOD_PK PRIMARY KEY (ID)
+);
+
+CREATE TABLE TIPO_COMUNAS (
+  ID NUMBER (22,0) NOT NULL,
+  TIPO VARCHAR(255) NOT NULL,
+    CONSTRAINT ID_TIPO_COMUNAS_PK PRIMARY KEY (ID)
+);
+
+CREATE TABLE COMUNAS (
+  ID NUMBER (22,0) NOT NULL,
+  NOMBRE VARCHAR(255) NOT NULL,
+  TIPO_COMUNA_ID NUMBER (22,0) NOT NULL,
+    CONSTRAINT ID_COMUNAS_PK PRIMARY KEY (ID),
+    CONSTRAINT TIPO_COMUNA_ID_FK FOREIGN KEY (TIPO_COMUNA_ID)
+    REFERENCES TIPO_COMUNAS(ID)
+);
+
+CREATE TABLE BARRIOS(
+  ID NUMBER (22,0) NOT NULL,
+  NOMBRE VARCHAR(255) NOT NULL,
+  COMUNA_ID NUMBER (22,0) NOT NULL,
+    CONSTRAINT ID_BARRIOS_PK PRIMARY KEY (ID),
+    CONSTRAINT COMUNA_ID_FK FOREIGN KEY (COMUNA_ID)
+    REFERENCES COMUNAS(ID)
+);
+
+CREATE TABLE PRESTADORES(
+  ID NUMBER (22,0) NOT NULL,
+  NOMBRE VARCHAR(255) NOT NULL,
+  FECHA_CONTRATACION DATE NOT NULL,
+  VALOR_CONTRATO NUMBER (22,0) NOT NULL,
+  ESTADO_ID NUMBER (22,0) NOT NULL,
+    CONSTRAINT ID_PRESTADORES_PK PRIMARY KEY (ID),
+    CONSTRAINT ESTADO_ID_FK FOREIGN KEY (ESTADO_ID)
+    REFERENCES ESTADOS_PRESTADORES(ID)
+);
+
+CREATE TABLE SEDES(
+  ID NUMBER (22,0) NOT NULL,
+  SEDE VARCHAR(255) NOT NULL,
+  TELEFONO VARCHAR(255) NOT NULL,
+  DIRECCION VARCHAR(255) NOT NULL,
+  CUPOS_DISPUESTOS NUMBER (22,0) NOT NULL,
+  BARRIO_ID NUMBER (22,0) NOT NULL,
+  MODALIDAD_ID NUMBER (22,0) NOT NULL,
+  PRESTADOR_ID NUMBER (22,0) NOT NULL,
+    CONSTRAINT ID_SEDES_PK PRIMARY KEY (ID),
+    CONSTRAINT BARRIO_ID_FK FOREIGN KEY (BARRIO_ID)
+    REFERENCES BARRIOS(ID),
+    CONSTRAINT MODALIDAD_ID_FK FOREIGN KEY (MODALIDAD_ID)
+    REFERENCES MODALIDADES(ID),
+    CONSTRAINT PRESTADOR_ID_FK FOREIGN KEY (PRESTADOR_ID)
+    REFERENCES PRESTADORES(ID)  
+);
+
+SELECT * FROM BARRIOS;
+
+/*CREAR VISTAS*/
+CREATE VIEW QUERY_1
+ AS (SELECT NOMBRE)
+ FROM PRESTADORES 
+ WHERE NOMBRE.MODALIDAD = ludotekas;
+
+
+
+  
+  
+
+ 	            
+
+
 
 
 		      	
